@@ -12,12 +12,15 @@ name = input('Имя бд: ')
 name_table = input('Имя таблицы: ')
 
 def check_db() -> None:
-    conn = pymysql.connect(host='localhost',
-                             user=env.USER,
-                             password=env.PASSWORD,
-                             cursorclass=pymysql.cursors.DictCursor)
-    cursor = conn.cursor()
-    cursor.execute("CREATE DATABASE IF NOT EXISTS `%s`" % name)
+    try:
+        conn = pymysql.connect(host='localhost',
+                                user=env.USER,
+                                password=env.PASSWORD,
+                                cursorclass=pymysql.cursors.DictCursor)
+        cursor = conn.cursor()
+        cursor.execute("CREATE DATABASE IF NOT EXISTS `%s`" % name)
+    except pymysql.err.ProgrammingError as e:
+        print(e)
 
     conn = pymysql.connect(host='localhost',
                              user=env.USER,
@@ -29,7 +32,7 @@ def check_db() -> None:
 
     try:
         cursor.execute("SELECT * FROM %s" % name_table)
-    except BaseException:
+    except pymysql.err.MySQLError:
         with open('create_structure.sql', 'r') as sql_file:
             sql_script = sql_file.read()
             cursor.execute(sql_script % name_table)
@@ -38,34 +41,45 @@ def check_db() -> None:
     return
 
 def save_result(operation, result):
-    conn = pymysql.connect(host='localhost',
-                             user=env.USER,
-                             password=env.PASSWORD,
-                             database=name,
-                             cursorclass=pymysql.cursors.DictCursor)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO " + name_table + f" (operat, result) VALUES (%s, %s)", (operation, str(result)))
-    conn.commit()
+    try:
+        conn = pymysql.connect(host='localhost',
+                                user=env.USER,
+                                password=env.PASSWORD,
+                                database=name,
+                                cursorclass=pymysql.cursors.DictCursor)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO " + name_table + f" (operat, result) VALUES (%s, %s)", (operation, str(result)))
+        conn.commit()
+    except pymysql.err.DataError as e:
+        print('Ошибка с данными:', e)
+    except pymysql.err.DatabaseError as e:
+        print(e)
     return
 
 def save_db_to_xlxs():
-    conn = pymysql.connect(host='localhost',
-                            user=env.USER,
-                            password=env.PASSWORD,
-                            database=name,
-                            cursorclass=pymysql.cursors.DictCursor)
-    new_df = pd.read_sql("SELECT * FROM " + name_table, conn)
-    new_df.to_excel("out.xlsx")
+    try:
+        conn = pymysql.connect(host='localhost',
+                                user=env.USER,
+                                password=env.PASSWORD,
+                                database=name,
+                                cursorclass=pymysql.cursors.DictCursor)
+        new_df = pd.read_sql("SELECT * FROM " + name_table, conn)
+        new_df.to_excel("out.xlsx")
+    except pymysql.err.DatabaseError as e:
+        print(e)
     return
 
 def print_db():
-    conn = pymysql.connect(host='localhost',
-                            user=env.USER,
-                            password=env.PASSWORD,
-                            database=name,
-                            cursorclass=pymysql.cursors.DictCursor)
-    new_df = pd.read_sql("SELECT * FROM " + name_table, conn)
-    print(new_df)
+    try:
+        conn = pymysql.connect(host='localhost',
+                                user=env.USER,
+                                password=env.PASSWORD,
+                                database=name,
+                                cursorclass=pymysql.cursors.DictCursor)
+        new_df = pd.read_sql("SELECT * FROM " + name_table, conn)
+        print(new_df)
+    except pymysql.err.DatabaseError as e:
+        print(e)
     return
 
 def print_exel():
