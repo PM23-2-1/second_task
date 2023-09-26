@@ -102,6 +102,7 @@ def op_del():
     if number_b != 0:
         print('a / b =', number_a / number_b)
         save_result('a / b', number_a / number_b)
+    return
 
 def op_step():
     number_a = float(input('a: '))
@@ -135,6 +136,7 @@ def main():
                       check_db, op_plus, op_minus,
                       op_ymn, op_del, op_step, op_abs,
                       print_db, save_db_to_xlxs, print_exel)
+    return
 
 if __name__ == '__main__':
     main()
