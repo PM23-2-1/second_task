@@ -1,6 +1,6 @@
 import os
 def uni(strings : str, *func):
-    os.system('clear')
+    os.system('cls||clear')
     print(strings)
     command = input('Команда: ')
     if command.isdigit() and int(command) - 1 < len(func) and int(command) - 1 >= 0:

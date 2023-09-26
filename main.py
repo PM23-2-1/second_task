@@ -7,58 +7,72 @@ import env
 import universal
 
 warnings.filterwarnings("ignore")
+os.system('cls||clear')
+name = input('Имя бд: ')
+name_table = input('Имя таблицы: ')
 
 def check_db() -> None:
     conn = pymysql.connect(host='localhost',
                              user=env.USER,
                              password=env.PASSWORD,
-                             database=env.DATABASE,
+                             cursorclass=pymysql.cursors.DictCursor)
+    cursor = conn.cursor()
+    cursor.execute("CREATE DATABASE IF NOT EXISTS `%s`" % name)
+
+    conn = pymysql.connect(host='localhost',
+                             user=env.USER,
+                             password=env.PASSWORD,
+                             database=name,
                              cursorclass=pymysql.cursors.DictCursor)
     cursor = conn.cursor()
     print("База данных подключена")
 
     try:
-        cursor.execute("SELECT * FROM operations")
-    except BaseException as e:
-        print(e)
+        cursor.execute("SELECT * FROM %s" % name_table)
+    except BaseException:
         with open('create_structure.sql', 'r') as sql_file:
             sql_script = sql_file.read()
-            cursor.execute(sql_script)
+            cursor.execute(sql_script % name_table)
             conn.commit()
             print("Скрипт SQL успешно выполнен")
+    return
 
 def save_result(operation, result):
     conn = pymysql.connect(host='localhost',
                              user=env.USER,
                              password=env.PASSWORD,
-                             database=env.DATABASE,
+                             database=name,
                              cursorclass=pymysql.cursors.DictCursor)
     cursor = conn.cursor()
-    cursor.execute(f"INSERT INTO operations(operat, result) VALUES (%s, %s)", (operation, str(result)))
+    cursor.execute("INSERT INTO " + name_table + f" (operat, result) VALUES (%s, %s)", (operation, str(result)))
     conn.commit()
+    return
 
 def save_db_to_xlxs():
     conn = pymysql.connect(host='localhost',
                             user=env.USER,
                             password=env.PASSWORD,
-                            database=env.DATABASE,
+                            database=name,
                             cursorclass=pymysql.cursors.DictCursor)
-    new_df = pd.read_sql("SELECT * FROM operations", conn)
+    new_df = pd.read_sql("SELECT * FROM " + name_table, conn)
     new_df.to_excel("out.xlsx")
+    return
 
 def print_db():
     conn = pymysql.connect(host='localhost',
                             user=env.USER,
                             password=env.PASSWORD,
-                            database=env.DATABASE,
+                            database=name,
                             cursorclass=pymysql.cursors.DictCursor)
-    new_df = pd.read_sql("SELECT * FROM operations", conn)
+    new_df = pd.read_sql("SELECT * FROM " + name_table, conn)
     print(new_df)
+    return
 
 def print_exel():
     name = input('Путь до файла и название: ')
     new_df = pd.read_excel(name)
     print(new_df)
+    return
 
 
 def op_plus():
@@ -66,18 +80,21 @@ def op_plus():
     number_b = float(input('b: '))
     print('a + b =', number_a + number_b)
     save_result('a + b', number_a + number_b)
+    return
 
 def op_minus():
     number_a = float(input('a: '))
     number_b = float(input('b: '))
     print('a - b =', number_a - number_b)
     save_result('a - b', number_a - number_b)
+    return
 
 def op_ymn():
     number_a = float(input('a: '))
     number_b = float(input('b: '))
     print('a * b =', number_a * number_b)
     save_result('a * b', number_a * number_b)
+    return
 
 def op_del():
     number_a = float(input('a: '))
@@ -91,11 +108,13 @@ def op_step():
     number_b = float(input('b: '))
     print('a ** b =', number_a ** number_b)
     save_result('a ** b', number_a ** number_b)
+    return
 
 def op_abs():
     number_a = float(input('a: '))
     print('abs(a) =', abs(number_a))
     save_result('abs(a)', abs(number_a))
+    return
 
 def main():
     run = True
